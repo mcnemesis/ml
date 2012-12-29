@@ -14,7 +14,9 @@ using this sort of approach for example:
     request_datetime = datetime.now()
     recommendation_size = 5
     
-    playlist = r.recommend(request_datetime,recommendation_size)
+    playlist = r.recommend_best(request_datetime,recommendation_size)
+
+    rare_playlist = r.recommend_rarest(recommendation_size) #getting the rarest is automatically relative to current timestamp
 
 In the above, playlist will contain a list of music file paths (the filter specifying what files are of interest is
 specified as a regular expression in the ffilter param -- defaults to r'^.+\.(mp3)$').
@@ -43,7 +45,7 @@ But to make things much more easy, and fun. I have provided a script that automa
 recommended songs in vlc. Note that u can change the hard-coded path passed as a parameter to the script (including the 
 above use-case), so as to point to where u want the music to be sampled from.
 
-./suggest_vlc.sh /media/planet/Ziki/ETHNIC/ 10
+./suggest_best_vlc.sh /media/planet/Ziki/ETHNIC/ 10
 
 
 NOTE : 
@@ -57,4 +59,4 @@ For example:
 
 or 
 
-./suggest_vlc.sh /media/planet/Ziki/ETHNIC/ 10 rare
+./suggest_rare_vlc.sh /media/planet/Ziki/ETHNIC/ 10
