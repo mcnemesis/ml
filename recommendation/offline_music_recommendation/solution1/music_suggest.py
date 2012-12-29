@@ -62,13 +62,20 @@ class Entity:
     def get_most_recent_member_access_time(self):
         return self.most_recent_member_atime
 
-    def calculate_rarity_rank(self,request_datetime):
+    def calculate_rarity_rank(self):
 
         atime = datetime.fromtimestamp(self.get_most_recent_member_access_time())
-        
-        radiff = (request_datetime - atime).seconds 
 
-        self.rank = (1 - 1.0 / radiff  ) * self.get_number_plays()
+        now = datetime.now()
+        
+        radiff = (now - atime).seconds 
+
+        #print "radiff (now - atime) : %s | %s " % (radiff,self.path)
+
+        if radiff == 0:
+            self.rank = 1.0/self.get_number_plays()
+        else:
+            self.rank = (1 - 1.0 / radiff  ) * self.get_number_plays()
 
     def calculate_rank(self,request_datetime):
         epoch = datetime(year=1970,month=1,day=1)
@@ -83,9 +90,12 @@ class Entity:
         
         radiff = (request_datetime - atime).seconds 
 
-        #print "radiff: %s , plays : %s " % (radiff,self.number_plays)
+        #print "radiff (re - atime) : %s | %s " % (radiff,self.path)
 
-        self.rank = ( 1.0 / radiff  ) * self.get_number_plays()
+        if radiff == 0:
+            self.rank = self.get_number_plays()
+        else:
+            self.rank = ( 1.0 / radiff  ) * self.get_number_plays()
 
     def get_best_members(self,request_datetime,size):
         from random import sample
@@ -100,16 +110,16 @@ class Entity:
             for member in self.members:
                 best.extend(member.get_best_members(request_datetime,size))
 
-            best_list = sorted(best,key=lambda m: m.rank)[0:size * 2]
+            best_list = sorted(best,key=lambda m: m.rank,reverse=True)[0:size * 2]
 
             best_list = sample(best_list,min(size,len(best_list)))
 
             return best_list
 
-    def get_rarest_members(self,request_datetime,size):
+    def get_rarest_members(self,size):
         from random import sample
 
-        map(lambda m : m.calculate_rarity_rank(request_datetime), self.members)
+        map(lambda m : m.calculate_rarity_rank(), self.members)
 
         if self.is_file:
             return [self]
@@ -117,12 +127,12 @@ class Entity:
             best = []
 
             for member in self.members:
-                best.extend(member.get_best_members(request_datetime,size))
+                best.extend(member.get_rarest_members(size))
 
-            best_list = sorted(best,key=lambda m: m.rank)[0:size * 2]
+            best_list = sorted(best,key=lambda m: m.rank,reverse=True)[0:size * 2]
 
             best_list = sample(best_list,min(size,len(best_list)))
-
+            
             return best_list
 
     def __repr__(self):
@@ -144,8 +154,8 @@ class RecommendationEngine:
     def recommend_best(self,request_datetime,size):
         return self.collection.get_best_members(request_datetime,size)
 
-    def recommend_rarest(self,request_datetime,size):
-        return self.collection.get_rarest_members(request_datetime,size)
+    def recommend_rarest(self,size):
+        return self.collection.get_rarest_members(size)
 
 if __name__ == '__main__':
     import sys
@@ -169,7 +179,7 @@ if __name__ == '__main__':
             r = RecommendationEngine(collection_path,ffilter=r'^.+\.(mp3|mp4|flv|wma)$')
             request_datetime = datetime.now()
 
-            playlist = r.recommend_best(request_datetime,recommendation_size) if mode == 'best' else r.recommend_rarest(request_datetime,recommendation_size)
+            playlist = r.recommend_best(request_datetime,recommendation_size) if mode == 'best' else r.recommend_rarest(recommendation_size)
             
             for p in playlist:
                 print '"%s"' % p.path 
