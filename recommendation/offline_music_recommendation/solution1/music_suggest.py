@@ -62,6 +62,14 @@ class Entity:
     def get_most_recent_member_access_time(self):
         return self.most_recent_member_atime
 
+    def calculate_rarity_rank(self,request_datetime):
+
+        atime = datetime.fromtimestamp(self.get_most_recent_member_access_time())
+        
+        radiff = (request_datetime - atime).seconds 
+
+        self.rank = (1 - 1.0 / radiff  ) * self.get_number_plays()
+
     def calculate_rank(self,request_datetime):
         epoch = datetime(year=1970,month=1,day=1)
 
@@ -74,8 +82,6 @@ class Entity:
         request_datetime = epoch + timedelta(hours=t.hour,minutes=t.minute,seconds=t.second)
         
         radiff = (request_datetime - atime).seconds 
-
-        #print "RADIFF: %s | %s " % (radiff,self.path)
 
         #print "radiff: %s , plays : %s " % (radiff,self.number_plays)
 
@@ -100,6 +106,24 @@ class Entity:
 
             return best_list
 
+    def get_rarest_members(self,request_datetime,size):
+        from random import sample
+
+        map(lambda m : m.calculate_rarity_rank(request_datetime), self.members)
+
+        if self.is_file:
+            return [self]
+        else:
+            best = []
+
+            for member in self.members:
+                best.extend(member.get_best_members(request_datetime,size))
+
+            best_list = sorted(best,key=lambda m: m.rank)[0:size * 2]
+
+            best_list = sample(best_list,min(size,len(best_list)))
+
+            return best_list
 
     def __repr__(self):
         return "%s : r:%s | p:%s { %s }" % (
@@ -117,26 +141,35 @@ class RecommendationEngine:
     def __init__(self,music_base,ffilter=r'^.+\.(mp3)$'): #only mp3 by default
         self.collection = Entity(music_base,ffilter=ffilter)
 
-    def recommend(self,request_datetime,size):
+    def recommend_best(self,request_datetime,size):
         return self.collection.get_best_members(request_datetime,size)
 
+    def recommend_rarest(self,request_datetime,size):
+        return self.collection.get_rarest_members(request_datetime,size)
 
 if __name__ == '__main__':
     import sys
 
     collection_path = '/media/planet/Ziki'
     recommendation_size = 1
+    mode = 'best'
 
     if len(sys.argv) == 2:
         collection_path = os.path.expanduser(sys.argv[1])
     elif len(sys.argv) == 3:
         collection_path = os.path.expanduser(sys.argv[1])
         recommendation_size = int(sys.argv[2])
+    elif len(sys.argv) == 4:
+        collection_path = os.path.expanduser(sys.argv[1])
+        recommendation_size = int(sys.argv[2])
+        mode = sys.argv[2]
 
     if os.path.exists(collection_path):
         if recommendation_size > 0:
             r = RecommendationEngine(collection_path,ffilter=r'^.+\.(mp3|mp4|flv|wma)$')
             request_datetime = datetime.now()
-            playlist = r.recommend(request_datetime,recommendation_size)
+
+            playlist = r.recommend_best(request_datetime,recommendation_size) if mode == 'best' else r.recommend_rarest(request_datetime,recommendation_size)
+            
             for p in playlist:
                 print '"%s"' % p.path 
