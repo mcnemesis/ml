@@ -82,6 +82,8 @@ class Entity:
         self.rank = ( 1.0 / radiff  ) * self.get_number_plays()
 
     def get_best_members(self,request_datetime,size):
+        from random import sample
+
         map(lambda m : m.calculate_rank(request_datetime), self.members)
 
         if self.is_file:
@@ -92,7 +94,9 @@ class Entity:
             for member in self.members:
                 best.extend(member.get_best_members(request_datetime,size))
 
-            best_list = sorted(best,key=lambda m: m.rank)[0:size]
+            best_list = sorted(best,key=lambda m: m.rank)[0:size * 2]
+
+            best_list = sample(best_list,min(size,len(best_list)))
 
             return best_list
 
@@ -134,4 +138,5 @@ if __name__ == '__main__':
             r = RecommendationEngine(collection_path,ffilter=r'^.+\.(mp3|mp4|flv|wma)$')
             request_datetime = datetime.now()
             playlist = r.recommend(request_datetime,recommendation_size)
-            print "\r\n".join(['"%s"' % p.path for p in playlist])
+            for p in playlist:
+                print '"%s"' % p.path 
