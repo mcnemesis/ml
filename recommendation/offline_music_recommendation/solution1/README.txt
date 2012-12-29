@@ -45,3 +45,16 @@ above use-case), so as to point to where u want the music to be sampled from.
 
 ./suggest_vlc.sh /media/planet/Ziki/ETHNIC/ 10
 
+
+NOTE : 
+======
+I've modified the Recommendation Engine to also be able to recommend what it finds to be the most rarely played music in the 
+collection. For this mode, just pass an extra parameter to the invocations above ('best' for normal mode, else it's the rare mode)
+
+For example:
+
+./music_suggest.py /media/planet/Ziki/TECHNIX/DARKSTEP/ 5 rare
+
+or 
+
+./suggest_vlc.sh /media/planet/Ziki/ETHNIC/ 10 rare
