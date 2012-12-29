@@ -1,2 +1,3 @@
 #!/usr/bin/sh
-./music_suggest.py $1 $2 | xargs vlc --play-and-exit
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+$DIR/music_suggest.py $1 $2 | xargs vlc --play-and-exit
