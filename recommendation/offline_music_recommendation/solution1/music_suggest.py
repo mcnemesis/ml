@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-from datetime import datetime
+from datetime import datetime,timedelta
 import re
 
 
@@ -66,6 +66,12 @@ class Entity:
         epoch = datetime(year=1970,month=1,day=1)
 
         atime = datetime.fromtimestamp(self.get_most_recent_member_access_time())
+        t = atime.time()
+
+        atime = epoch + timedelta(hours=t.hour,minutes=t.minute,seconds=t.second)
+
+        t = request_datetime.time()
+        request_datetime = epoch + timedelta(hours=t.hour,minutes=t.minute,seconds=t.second)
         
         radiff = (request_datetime - atime).seconds 
 
